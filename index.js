@@ -12,8 +12,9 @@ const store = makeInMemoryStore({ })
 
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState(`auth`)
-    const { version, isLatest } = await fetchLatestWaWebVersion({});
-    console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
+    const { currentVersion } = await (await fetch("https://cdn.jsdelivr.net/gh/wppconnect-team/wa-version@main/versions.json")).json();
+    const version = (currentVersion.match(/\d+\.\d+\.\d+/g)?.[0] || "2.3000.1016320664").split(".")
+    console.log(`using WA v${version.join(".")}`);
     const sock = makeWASocket({
         version,
         logger,
