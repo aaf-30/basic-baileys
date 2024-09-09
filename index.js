@@ -1,4 +1,4 @@
-const { makeWASocket, makeCacheableSignalKeyStore, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, fetchLatestWaWebVersion, makeInMemoryStore, delay, downloadMediaMessage, proto, isJidBroadcast, isJidGroup, WAMessageKey, WAMessageContent, Browsers } = require('@whiskeysockets/baileys');
+const { makeWASocket, makeCacheableSignalKeyStore, useMultiFileAuthState, makeInMemoryStore, delay, proto, isJidBroadcast, Browsers } = require('@whiskeysockets/baileys');
 const NodeCache = require('node-cache');
 const fs = require('fs');
 const readline = require("readline");
