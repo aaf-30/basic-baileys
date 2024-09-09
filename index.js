@@ -8,23 +8,20 @@ const rl = readline.createInterface({
  output: process.stdout,
 });
 const question = (text) => new Promise((resolve) => rl.question(text, resolve));
+const store = makeInMemoryStore({ })
 
-
-async function connectToWhatsApp(nomor) {
-    const store = makeInMemoryStore({ })
+async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState(`auth`)
     const { version, isLatest } = await fetchLatestWaWebVersion({});
     console.log(`using WA v${version.join('.')}, isLatest: ${isLatest}`);
     const sock = makeWASocket({
-        version: [2, 3000, 1016192183],
+        version,
         logger,
         printQRInTerminal: false,
         auth: {
             creds: state.creds,
             keys: makeCacheableSignalKeyStore(state.keys, logger),
         },
-        keepAliveIntervalMs: 60_000,
-        connectTimeoutMs: 60_000,
         syncFullHistory: false,
         markOnlineOnConnect: true,
         shouldIgnoreJid: jid => isJidBroadcast(jid),
@@ -49,10 +46,10 @@ async function connectToWhatsApp(nomor) {
                 const { connection, lastDisconnect, qr, receivedPendingNotifications } = update;
                 if (connection === 'close') {
                     const statusCode = lastDisconnect?.error?.output?.statusCode;
-                    if ([401, 403].includes(statusCode)) {
-                        console.log(`Akun dikeluarkan`);
+                    if ([401, 403, 440].includes(statusCode)) {
+                        console.log(`connection closed, account logged out.`);
                     } else {
-                        console.log(`Koneksi dimulai ulang`, lastDisconnect);
+                        console.log(`connection restarted`, lastDisconnect);
                         connectToWhatsApp();
                     }
                 }           
@@ -63,8 +60,8 @@ async function connectToWhatsApp(nomor) {
                 await saveCreds();
             }
 
-
             if (events.call) {
+                // reject call
                 console.log('recv call event', events.call);
                 const call = events.call
                 let chatId = String(call[0].from)
@@ -85,6 +82,7 @@ async function connectToWhatsApp(nomor) {
                     case "notify":
                     case "append":
                         for (const msg of upsert.messages) {
+                            // handle incoming messages
                             console.log(msg)
                         }
                         break;
@@ -101,26 +99,6 @@ async function connectToWhatsApp(nomor) {
         }
         return proto.Message.fromObject({});
     }
-
-
-    async function mainHandler(msg) {
-        
-    }
-
-
-    async function editMessage(chatId, edit, text) {
-        await sock.sendMessage(chatId, { text, edit })
-    }
-
-    async function reactMessage(chatId, key, emote) {
-        return await sock.sendMessage(chatId, {
-            react: {
-                text: emote,
-                key: key
-            }
-        })
-    }
-
 }
 
 connectToWhatsApp()
